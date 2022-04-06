@@ -1,6 +1,6 @@
-from asyncio.windows_events import NULL
 from fastapi import FastAPI, APIRouter
 from fastapi import status, HTTPException
+from typing import Optional
 
 
 app = FastAPI(
@@ -34,7 +34,9 @@ RECIPES = [
 ]
 
 
-@appRoute.get("/", status_code=200)
+@appRoute.get(path="/msg/",
+              status_code=200,
+              deprecated=True)
 def root() -> dict:
     """
     Root GET
@@ -43,7 +45,7 @@ def root() -> dict:
 
 
 @appRoute.get(
-    path='/recipe/{id}',
+    path='/api/recipe/{id}',
     status_code=status.HTTP_200_OK)
 async def getRecipeById(id: int) -> dict:
     """_summary_
@@ -58,6 +60,27 @@ async def getRecipeById(id: int) -> dict:
     if result != []:
         return result[0]
     raise  HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+
+@app.get(
+    path='/api/recipe',
+    status_code=status.HTTP_200_OK
+    )
+def getByLabel(keyword:Optional[str] = None,
+               max_results: Optional[int] = 10,
+               ) -> dict:
+    """_summary_
+
+    Args:
+        label (str): _description_
+
+    Returns:
+        dict: _description_
+    """
+    if not keyword:
+        return {"results": RECIPES[: max_results] }
+    results  = filter(lambda recipe:keyword.lower() in recipe["label"].lower(), RECIPES)
+    return {"results":list(results[:max_results])}
 
 
 app.include_router(appRoute)
